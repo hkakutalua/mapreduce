@@ -150,3 +150,17 @@ func (state *MasterState) GetReduceTaskById(reduceTaskId uint16) *ReduceTask {
 
 	return nil
 }
+
+func (state *MasterState) AssignMapTaskToWorker(mapTaskId uint16, workerId WorkerId) {
+	state.mutex.Lock()
+	defer state.mutex.Unlock()
+
+	mapTask := state.MapTasks[mapTaskId]
+	worker := state.Workers[workerId]
+
+	mapTask.Status = rpc.InProgress
+	mapTask.WorkerAssignedId = &worker.Id
+
+	state.MapTasks[mapTaskId] = mapTask
+	state.Workers[workerId] = worker
+}

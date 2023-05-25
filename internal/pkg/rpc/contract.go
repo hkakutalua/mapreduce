@@ -20,6 +20,12 @@ type GetHeartBeatReply struct {
 	ReduceTask *ReduceTaskState
 }
 
+type StartMapTaskArgs struct {
+	Id                     uint16
+	InputFileSplitLocation string
+}
+type StartMapTaskReply struct{}
+
 type AbortReduceTaskArgs struct{}
 type AbortReduceTaskReply struct{}
 
