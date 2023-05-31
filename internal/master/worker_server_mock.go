@@ -21,6 +21,7 @@ type WorkerServer struct {
 	enqueuedGetHearbeatReplies     []rpc.GetHeartBeatReply
 	enqueuedAbortReduceTaskReplies []rpc.AbortReduceTaskReply
 	enqueuedStartMapTaskReplies    []rpc.StartMapTaskReply
+	enqueuedStartReduceTaskReplies []rpc.StartReduceTaskReply
 	server                         golangrpc.Server
 	Hostname                       string
 	Port                           uint16
@@ -35,6 +36,11 @@ func (workerServer *WorkerServer) EnqueueGetHeartbeatReply(reply rpc.GetHeartBea
 func (workerServer *WorkerServer) EnqueueStartMapTask(reply rpc.StartMapTaskReply) {
 	workerServer.enqueuedStartMapTaskReplies =
 		append(workerServer.enqueuedStartMapTaskReplies, reply)
+}
+
+func (workerServer *WorkerServer) EnqueueStartReduceTask(reply rpc.StartReduceTaskReply) {
+	workerServer.enqueuedStartReduceTaskReplies =
+		append(workerServer.enqueuedStartReduceTaskReplies, reply)
 }
 
 func (workerServer *WorkerServer) EnqueueAbortReduceTaskReply(reply rpc.AbortReduceTaskReply) {
@@ -82,6 +88,22 @@ func (workerServer *WorkerServer) StartMapTask(
 	*reply = workerServer.enqueuedStartMapTaskReplies[0]
 
 	workerServer.enqueuedStartMapTaskReplies = workerServer.enqueuedStartMapTaskReplies[1:]
+	return nil
+}
+
+func (workerServer *WorkerServer) StartReduceTask(
+	args rpc.StartReduceTaskArgs,
+	reply *rpc.StartReduceTaskReply,
+) error {
+	workerServer.addRequest(args)
+
+	if len(workerServer.enqueuedStartReduceTaskReplies) == 0 {
+		return fmt.Errorf("no more enqueued start reduce tasks")
+	}
+
+	*reply = workerServer.enqueuedStartReduceTaskReplies[0]
+
+	workerServer.enqueuedStartReduceTaskReplies = workerServer.enqueuedStartReduceTaskReplies[1:]
 	return nil
 }
 

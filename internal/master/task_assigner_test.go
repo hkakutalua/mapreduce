@@ -261,17 +261,127 @@ func TestThat_ItShouldAssignReduceTaskForAvailableWorker_WhenAllMapTasksAreCompl
 		Port:     mockWorkerServer.Port,
 		Status:   Online,
 	}
-	intermediateFile
-	mapTask1 := MapTask{
+	completedMapTask1 := MapTask{
 		Id:                     0,
 		Status:                 rpc.Completed,
 		InputFileSplitLocation: "//path/to/split_1",
 		WorkerAssignedId:       nil,
+		IntermediateFiles: []rpc.IntermediateFile{
+			{Location: "//path/to/0/file_1", Partition: 0, SizeInBytes: 1_000},
+			{Location: "//path/to/0/file_2", Partition: 1, SizeInBytes: 1_000},
+		},
 	}
-	mapTask2 := MapTask{
+	completedMapTask2 := MapTask{
 		Id:                     1,
 		Status:                 rpc.Completed,
 		InputFileSplitLocation: "//path/to/split_2",
 		WorkerAssignedId:       nil,
+		IntermediateFiles: []rpc.IntermediateFile{
+			{Location: "//path/to/1/file_1", Partition: 0, SizeInBytes: 1_000},
+			{Location: "//path/to/1/file_2", Partition: 1, SizeInBytes: 1_000},
+		},
 	}
+	idleReduceTask1 := ReduceTask{Id: 0, Status: rpc.Idle, PartitionNumber: 0}
+	idleReduceTask2 := ReduceTask{Id: 1, Status: rpc.Idle, PartitionNumber: 1}
+
+	masterState := MasterState{
+		Workers:     []Worker{availableWorker1, availableWorker2},
+		MapTasks:    []MapTask{completedMapTask1, completedMapTask2},
+		ReduceTasks: []ReduceTask{idleReduceTask1, idleReduceTask2},
+	}
+
+	mockWorkerServer.EnqueueStartReduceTask(rpc.StartReduceTaskReply{})
+	mockWorkerServer.EnqueueStartReduceTask(rpc.StartReduceTaskReply{})
+
+	AssignIdleReduceTasksToAvailableWorkers(&masterState, rpc.DefaultRpcGateway{})
+
+	assert.Equal(t, 2, mockWorkerServer.RequestCount)
+
+	assert.Equal(t, rpc.InProgress, masterState.ReduceTasks[idleReduceTask1.Id].Status)
+	assert.Equal(t, availableWorker1.Id, *masterState.ReduceTasks[idleReduceTask1.Id].WorkerAssignedId)
+	assert.Equal(t, rpc.InProgress, masterState.ReduceTasks[idleReduceTask2.Id].Status)
+	assert.Equal(t, availableWorker2.Id, *masterState.ReduceTasks[idleReduceTask2.Id].WorkerAssignedId)
+
+	startReduceTaskArgs1 := mockWorkerServer.TakeRequest().Args
+	assert.IsType(t, rpc.StartReduceTaskArgs{}, startReduceTaskArgs1)
+	assert.Equal(t, uint16(0), startReduceTaskArgs1.(rpc.StartReduceTaskArgs).Id)
+	assert.Equal(t,
+		[]rpc.IntermediateFile{
+			{Location: "//path/to/0/file_1", Partition: 0, SizeInBytes: 1_000},
+			{Location: "//path/to/1/file_1", Partition: 0, SizeInBytes: 1_000},
+		},
+		startReduceTaskArgs1.(rpc.StartReduceTaskArgs).IntermediateFiles,
+	)
+
+	startReduceTaskArgs2 := mockWorkerServer.TakeRequest().Args
+	assert.IsType(t, rpc.StartReduceTaskArgs{}, startReduceTaskArgs2)
+	assert.Equal(t, uint16(1), startReduceTaskArgs2.(rpc.StartReduceTaskArgs).Id)
+	assert.Equal(t,
+		[]rpc.IntermediateFile{
+			{Location: "//path/to/0/file_2", Partition: 1, SizeInBytes: 1_000},
+			{Location: "//path/to/1/file_2", Partition: 1, SizeInBytes: 1_000},
+		},
+		startReduceTaskArgs2.(rpc.StartReduceTaskArgs).IntermediateFiles,
+	)
+
+	t.Cleanup(func() {
+		mockWorkerServer.StopServer()
+	})
+}
+
+func TestThat_ItShouldNotAssignReduceTaskForAvailableWorker_WhenNotAllMapTasksCompleted(t *testing.T) {
+	mockWorkerServer := WorkerServer{}
+	mockWorkerServer.StartServer()
+	availableWorker1 := Worker{
+		Id:       WorkerId(0),
+		Hostname: mockWorkerServer.Hostname,
+		Port:     mockWorkerServer.Port,
+		Status:   Online,
+	}
+	availableWorker2 := Worker{
+		Id:       WorkerId(1),
+		Hostname: mockWorkerServer.Hostname,
+		Port:     mockWorkerServer.Port,
+		Status:   Online,
+	}
+	completedMapTask := MapTask{
+		Id:                     0,
+		Status:                 rpc.Completed,
+		InputFileSplitLocation: "//path/to/split_1",
+		WorkerAssignedId:       nil,
+		IntermediateFiles: []rpc.IntermediateFile{
+			{Location: "//path/to/0/file_1", Partition: 0, SizeInBytes: 1_000},
+			{Location: "//path/to/0/file_2", Partition: 1, SizeInBytes: 1_000},
+		},
+	}
+	inProgressMapTask := MapTask{
+		Id:                     1,
+		Status:                 rpc.InProgress,
+		InputFileSplitLocation: "//path/to/split_2",
+		WorkerAssignedId:       nil,
+		IntermediateFiles: []rpc.IntermediateFile{
+			{Location: "//path/to/1/file_1", Partition: 0, SizeInBytes: 1_000},
+		},
+	}
+	reduceTask1 := ReduceTask{Id: 0, Status: rpc.Idle, PartitionNumber: 0}
+	reduceTask2 := ReduceTask{Id: 1, Status: rpc.Idle, PartitionNumber: 1}
+
+	masterState := MasterState{
+		Workers:     []Worker{availableWorker1, availableWorker2},
+		MapTasks:    []MapTask{completedMapTask, inProgressMapTask},
+		ReduceTasks: []ReduceTask{reduceTask1, reduceTask2},
+	}
+
+	AssignIdleReduceTasksToAvailableWorkers(&masterState, rpc.DefaultRpcGateway{})
+
+	assert.Equal(t, 0, mockWorkerServer.RequestCount)
+
+	assert.Equal(t, rpc.Idle, masterState.ReduceTasks[reduceTask1.Id].Status)
+	assert.Nil(t, masterState.ReduceTasks[reduceTask1.Id].WorkerAssignedId)
+	assert.Equal(t, rpc.Idle, masterState.ReduceTasks[reduceTask2.Id].Status)
+	assert.Nil(t, masterState.ReduceTasks[reduceTask2.Id].WorkerAssignedId)
+
+	t.Cleanup(func() {
+		mockWorkerServer.StopServer()
+	})
 }

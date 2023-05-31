@@ -41,10 +41,10 @@ func UpdateWorkerTasksFromHeartbeats(state *MasterState, rpcGateway rpc.RpcGatew
 				log.Panicf("reduce task %v not found", heartBeatReply.ReduceTask.Id)
 			}
 
-			if *reduceTask.AssignedWorkerId != worker.Id && heartBeatReply.ReduceTask.Status == rpc.InProgress {
+			if *reduceTask.WorkerAssignedId != worker.Id && heartBeatReply.ReduceTask.Status == rpc.InProgress {
 				log.Printf(
 					"a different worker (Id %v) is already assigned for the reduce task (Id %v) in progress in worker %v.",
-					*reduceTask.AssignedWorkerId, reduceTask.Id, worker.Id,
+					*reduceTask.WorkerAssignedId, reduceTask.Id, worker.Id,
 				)
 				log.Printf("aborting duplicated reduce task %v on worker %v.", reduceTask.Id, worker.Id)
 

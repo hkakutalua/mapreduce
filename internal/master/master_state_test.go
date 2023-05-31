@@ -164,7 +164,7 @@ func TestThat_ItShouldUpdateReduceTaskAssignedToWorker_WhenOnlineWorkerHasReduce
 				Status:             rpc.InProgress,
 				PartitionNumber:    3,
 				OutputFileLocation: nil,
-				AssignedWorkerId:   &workerId,
+				WorkerAssignedId:   &workerId,
 			},
 		},
 	}
@@ -192,7 +192,7 @@ func TestThat_ItShouldNotUpdateReduceTask_WhenTheresNoWorkerAssignedToTask(t *te
 				Status:             rpc.InProgress,
 				PartitionNumber:    3,
 				OutputFileLocation: nil,
-				AssignedWorkerId:   nil,
+				WorkerAssignedId:   nil,
 			},
 		},
 	}
@@ -204,7 +204,7 @@ func TestThat_ItShouldNotUpdateReduceTask_WhenTheresNoWorkerAssignedToTask(t *te
 	assert.Equal(t, Online, masterState.Workers[workerId].Status)
 	assert.Equal(t, rpc.InProgress, masterState.ReduceTasks[reduceTaskId].Status)
 	assert.Nil(t, masterState.ReduceTasks[reduceTaskId].OutputFileLocation)
-	assert.Nil(t, masterState.ReduceTasks[reduceTaskId].AssignedWorkerId)
+	assert.Nil(t, masterState.ReduceTasks[reduceTaskId].WorkerAssignedId)
 }
 
 func TestThat_ItShouldNotUpdateReduceTask_WhenAnotherWorkerHasBeenAssignedToTask(t *testing.T) {
@@ -222,7 +222,7 @@ func TestThat_ItShouldNotUpdateReduceTask_WhenAnotherWorkerHasBeenAssignedToTask
 				Status:             rpc.InProgress,
 				PartitionNumber:    3,
 				OutputFileLocation: nil,
-				AssignedWorkerId:   &assignedWorkerId,
+				WorkerAssignedId:   &assignedWorkerId,
 			},
 		},
 	}
@@ -234,7 +234,7 @@ func TestThat_ItShouldNotUpdateReduceTask_WhenAnotherWorkerHasBeenAssignedToTask
 	assert.Equal(t, Online, masterState.Workers[nonAssignedWorkerId].Status)
 	assert.Equal(t, rpc.InProgress, masterState.ReduceTasks[reduceTaskId].Status)
 	assert.Nil(t, masterState.ReduceTasks[reduceTaskId].OutputFileLocation)
-	assert.Equal(t, assignedWorkerId, *masterState.ReduceTasks[reduceTaskId].AssignedWorkerId)
+	assert.Equal(t, assignedWorkerId, *masterState.ReduceTasks[reduceTaskId].WorkerAssignedId)
 }
 
 func TestThat_ItShouldNotUpdateReduceTask_WhenTaskIsCompleted(t *testing.T) {
@@ -251,7 +251,7 @@ func TestThat_ItShouldNotUpdateReduceTask_WhenTaskIsCompleted(t *testing.T) {
 				Status:             rpc.Completed,
 				PartitionNumber:    3,
 				OutputFileLocation: nil,
-				AssignedWorkerId:   &workerId,
+				WorkerAssignedId:   &workerId,
 			},
 		},
 	}
@@ -263,5 +263,5 @@ func TestThat_ItShouldNotUpdateReduceTask_WhenTaskIsCompleted(t *testing.T) {
 	assert.Equal(t, Online, masterState.Workers[workerId].Status)
 	assert.Equal(t, rpc.Completed, masterState.ReduceTasks[reduceTaskId].Status)
 	assert.Nil(t, masterState.ReduceTasks[reduceTaskId].OutputFileLocation)
-	assert.Equal(t, workerId, *masterState.ReduceTasks[reduceTaskId].AssignedWorkerId)
+	assert.Equal(t, workerId, *masterState.ReduceTasks[reduceTaskId].WorkerAssignedId)
 }

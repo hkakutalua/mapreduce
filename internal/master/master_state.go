@@ -36,7 +36,7 @@ type ReduceTask struct {
 	Status             rpc.TaskStatus
 	PartitionNumber    uint16
 	OutputFileLocation *string
-	AssignedWorkerId   *WorkerId
+	WorkerAssignedId   *WorkerId
 }
 
 type MasterState struct {
@@ -115,15 +115,15 @@ func (state *MasterState) ChangeWorkerWithReduceTaskToOnline(
 
 	for i, reduceTask := range state.ReduceTasks {
 		if reduceTask.Id == reduceTaskId {
-			if reduceTask.AssignedWorkerId == nil {
+			if reduceTask.WorkerAssignedId == nil {
 				log.Printf("Skipping reduce task update for worker %v because"+
 					"task %v has no worker assigned to", workerId, reduceTask.Id)
 				return
 			}
 
-			if *(reduceTask.AssignedWorkerId) != workerId {
+			if *(reduceTask.WorkerAssignedId) != workerId {
 				log.Printf("Skipping reduce task update for worker %v because"+
-					"worker %v has already been assigned for the task %v", workerId, *(reduceTask.AssignedWorkerId), reduceTask.Id)
+					"worker %v has already been assigned for the task %v", workerId, *(reduceTask.WorkerAssignedId), reduceTask.Id)
 				return
 			}
 
@@ -162,5 +162,19 @@ func (state *MasterState) AssignMapTaskToWorker(mapTaskId uint16, workerId Worke
 	mapTask.WorkerAssignedId = &worker.Id
 
 	state.MapTasks[mapTaskId] = mapTask
+	state.Workers[workerId] = worker
+}
+
+func (state *MasterState) AssignReduceTaskToWorker(reduceTaskId uint16, workerId WorkerId) {
+	state.mutex.Lock()
+	defer state.mutex.Unlock()
+
+	reduceTask := state.ReduceTasks[reduceTaskId]
+	worker := state.Workers[workerId]
+
+	reduceTask.Status = rpc.InProgress
+	reduceTask.WorkerAssignedId = &worker.Id
+
+	state.ReduceTasks[reduceTaskId] = reduceTask
 	state.Workers[workerId] = worker
 }

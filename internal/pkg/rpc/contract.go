@@ -26,6 +26,12 @@ type StartMapTaskArgs struct {
 }
 type StartMapTaskReply struct{}
 
+type StartReduceTaskArgs struct {
+	Id                uint16
+	IntermediateFiles []IntermediateFile
+}
+type StartReduceTaskReply struct{}
+
 type AbortReduceTaskArgs struct{}
 type AbortReduceTaskReply struct{}
 

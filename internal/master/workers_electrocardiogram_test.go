@@ -116,7 +116,7 @@ func TestThat_ItShouldUpdateReduceTaskStateAssignedToWorker_WhenOnlineWorkerHasU
 				Status:             rpc.InProgress,
 				PartitionNumber:    0,
 				OutputFileLocation: nil,
-				AssignedWorkerId:   &onlineWorkerId,
+				WorkerAssignedId:   &onlineWorkerId,
 			},
 		},
 	}
@@ -165,7 +165,7 @@ func TestThat_ItShouldSendRequestToReduceInProgressWorkerToInterruptDuplicateTas
 				Status:             rpc.InProgress,
 				PartitionNumber:    0,
 				OutputFileLocation: nil,
-				AssignedWorkerId:   &assignedWorkerId,
+				WorkerAssignedId:   &assignedWorkerId,
 			},
 		},
 	}
@@ -185,7 +185,7 @@ func TestThat_ItShouldSendRequestToReduceInProgressWorkerToInterruptDuplicateTas
 	assert.Equal(t, Online, masterState.Workers[duplicateAssignedWorkerId].Status)
 	assert.Equal(t, Offline, masterState.Workers[assignedWorkerId].Status)
 	assert.Equal(t, rpc.InProgress, masterState.ReduceTasks[reduceTaskId].Status)
-	assert.Equal(t, assignedWorkerId, *masterState.ReduceTasks[reduceTaskId].AssignedWorkerId)
+	assert.Equal(t, assignedWorkerId, *masterState.ReduceTasks[reduceTaskId].WorkerAssignedId)
 
 	assert.Equal(t, 2, mockWorkerServer.RequestCount)
 	mockWorkerServer.TakeRequest()
@@ -222,7 +222,7 @@ func TestThat_ItShouldNotSendRequestToReduceCompletedWorkerToInterruptDuplicateT
 				Status:             rpc.InProgress,
 				PartitionNumber:    0,
 				OutputFileLocation: nil,
-				AssignedWorkerId:   &assignedWorkerId,
+				WorkerAssignedId:   &assignedWorkerId,
 			},
 		},
 	}
@@ -243,7 +243,7 @@ func TestThat_ItShouldNotSendRequestToReduceCompletedWorkerToInterruptDuplicateT
 	assert.Equal(t, Online, masterState.Workers[duplicateAssignedWorkerId].Status)
 	assert.Equal(t, Offline, masterState.Workers[assignedWorkerId].Status)
 	assert.Equal(t, rpc.InProgress, masterState.ReduceTasks[reduceTaskId].Status)
-	assert.Equal(t, assignedWorkerId, *masterState.ReduceTasks[reduceTaskId].AssignedWorkerId)
+	assert.Equal(t, assignedWorkerId, *masterState.ReduceTasks[reduceTaskId].WorkerAssignedId)
 
 	assert.Equal(t, 1, mockWorkerServer.RequestCount)
 	heartBeatRequest := mockWorkerServer.TakeRequest()
