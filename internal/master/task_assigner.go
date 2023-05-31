@@ -8,6 +8,9 @@ import (
 )
 
 func AssignIdleMapTasksToAvailableWorkers(masterState *MasterState, rpcGateway rpc.RpcGateway) {
+	masterState.mutex.Lock()
+	defer masterState.mutex.Unlock()
+
 	availableWorkers := getAvailableWorkersForMap(masterState.Workers, masterState.MapTasks)
 	idleMapTasks := getIdleMapTasks(masterState.MapTasks)
 	assignedWorkers := make([]Worker, 0)

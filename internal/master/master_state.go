@@ -47,9 +47,6 @@ type MasterState struct {
 }
 
 func (state *MasterState) ChangeWorkerOnlineStatus(workerId WorkerId, status WorkerStatus) {
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
-
 	for i, worker := range state.Workers {
 		if worker.Id == workerId {
 			worker.Status = status
@@ -65,9 +62,6 @@ func (state *MasterState) ChangeWorkerWithMapTaskToOnline(
 	intermediateFiles []rpc.IntermediateFile,
 	mapTaskStatus rpc.TaskStatus,
 ) {
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
-
 	worker := state.Workers[workerId]
 	worker.Status = Online
 	state.Workers[workerId] = worker
@@ -106,9 +100,6 @@ func (state *MasterState) ChangeWorkerWithReduceTaskToOnline(
 	outputFileLocation string,
 	reduceTaskStatus rpc.TaskStatus,
 ) {
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
-
 	worker := state.Workers[workerId]
 	worker.Status = Online
 	state.Workers[workerId] = worker
@@ -152,9 +143,6 @@ func (state *MasterState) GetReduceTaskById(reduceTaskId uint16) *ReduceTask {
 }
 
 func (state *MasterState) AssignMapTaskToWorker(mapTaskId uint16, workerId WorkerId) {
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
-
 	mapTask := state.MapTasks[mapTaskId]
 	worker := state.Workers[workerId]
 
@@ -166,9 +154,6 @@ func (state *MasterState) AssignMapTaskToWorker(mapTaskId uint16, workerId Worke
 }
 
 func (state *MasterState) AssignReduceTaskToWorker(reduceTaskId uint16, workerId WorkerId) {
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
-
 	reduceTask := state.ReduceTasks[reduceTaskId]
 	worker := state.Workers[workerId]
 

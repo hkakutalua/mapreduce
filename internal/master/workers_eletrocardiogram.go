@@ -8,6 +8,9 @@ import (
 )
 
 func UpdateWorkerTasksFromHeartbeats(state *MasterState, rpcGateway rpc.RpcGateway) {
+	state.mutex.Lock()
+	defer state.mutex.Unlock()
+
 	for _, worker := range state.Workers {
 		workerAddress := worker.Hostname + ":" + strconv.Itoa(int(worker.Port))
 		var heartBeatReply *rpc.GetHeartBeatReply = nil
